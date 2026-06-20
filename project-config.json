@@ -1,0 +1,13 @@
+{
+    "name": "bsp",
+    "description": "Project bsp",
+    "toolkit": "basic",
+    "sources": [
+        "src/main.bas"
+    ],
+    "build": "debug",
+    "definitions": [],
+    "includes": [],
+    "args": [],
+    "compiler": ""
+}

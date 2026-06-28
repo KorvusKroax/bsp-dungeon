@@ -14,7 +14,7 @@
 
 100 rem *** main loop ***
 101 seed=-int(rnd(1)*32768)-1:rem random seed
-102 seed=-6979:rem -22557:rem -17217 -2125
+102 rem seed=-6979:rem -22557:rem -17217 -2125
 103 r=rnd(seed):rem initialize random number generator
 
 105 gosub 500: rem create partitions

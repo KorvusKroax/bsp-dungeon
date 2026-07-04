@@ -173,18 +173,17 @@
 
 3500 rem *** draw corridors ***
 3510 for i=0 to cc-1
-3520 a=cn(i,0):b=cn(i,1):gosub 6000
+3520 a=cn(i,0):b=cn(i,1):gosub 6200
 3530 next i
 3540 return
 
 
 
-6000 rem draw corridor between two rooms (a-b) better!
+6000 rem draw corridor between two rooms
 
 6200 rem xg=max(rm(b,tl,x)-rm(a,br,x),rm(a,tl,x)-rm(b,br,x))
 6210 x1=rm(b,tl,x)-rm(a,br,x):x2=rm(a,tl,x)-rm(b,br,x)
 6230 dx=x2-x1:xg=x1-dx*(dx>0):rem get bigger x
-
 6300 rem yg=max(rm(b,tl,y)-rm(a,br,y),rm(a,tl,y)-rm(b,br,y))
 6310 y1=rm(b,tl,y)-rm(a,br,y):y2=rm(a,tl,y)-rm(b,br,y)
 6330 dy=y2-y1:yg=y1-dy*(dy>0):rem get bigger y
@@ -193,9 +192,7 @@
 6610 if xg>0 and yg>0 then on rnd(1)*2+1 goto 7100,7600
 6630 if yg>0 then 7600
 
-
-
-7100 rem horizontal z-shaped corridor
+7100 rem horizontal corridor
 7110 if rm(a,br,x)<=rm(b,tl,x) then ax=rm(a,br,x):bx=rm(b,tl,x):goto 7120
 7115 ax=rm(a,tl,x):bx=rm(b,br,x)
 
@@ -203,15 +200,14 @@
 7140 dy=rm(a,br,y)-rm(a,tl,y)-2
 7145 ay=rm(a,tl,y)+1+int(rnd(1)*dy) or 1
 7150 a0=ax+ay*40:poke 1024+a0,43:rem poke 55296+a0,10
-
 7160 if cl(b,0)=-2 then gosub 8100:goto 7200
 7180 dy=rm(b,br,y)-rm(b,tl,y)-2
 7185 by=rm(b,tl,y)+1+int(rnd(1)*dy) or 1
 7190 a0=bx+by*40:poke 1024+a0,43:rem poke 55296+a0,10
-
 7200 if ay=by then 7400
-7210 dx=sgn(bx-ax)
-7220 dy=sgn(by-ay)
+
+7205 rem horizontal z-shaped corridor
+7210 dx=sgn(bx-ax):dy=sgn(by-ay)
 7230 mx=(ax+dx+int(rnd(1)*abs(bx-ax-2*dx))*dx) or 1
 7240 for j=ax+dx to mx-dx step dx
 7250 a0=j+ay*40:gosub 9000
@@ -223,6 +219,7 @@
 7310 a0=j+by*40:gosub 9000
 7320 next j
 7330 return
+
 7400 rem horizontal straight corridor
 7410 dx=sgn(bx-ax)
 7420 for j=ax+dx to bx-dx step dx
@@ -232,7 +229,7 @@
 
 
 
-7600 rem vertical z-shaped corridor
+7600 rem vertical corridor
 7610 if rm(a,br,y)<=rm(b,tl,y) then ay=rm(a,br,y):by=rm(b,tl,y):goto 7620
 7615 ay=rm(a,tl,y):by=rm(b,br,y)
 
@@ -240,15 +237,14 @@
 7640 dx=rm(a,br,x)-rm(a,tl,x)-2
 7645 ax=rm(a,tl,x)+1+int(rnd(1)*dx) or 1
 7650 a0=ax+ay*40:poke 1024+a0,43:rem poke 55296+a0,10
-
 7660 if cl(b,0)=-2 then gosub 8100:goto 7700
 7680 dx=rm(b,br,x)-rm(b,tl,x)-2
 7685 bx=rm(b,tl,x)+1+int(rnd(1)*dx) or 1
 7690 a0=bx+by*40:poke 1024+a0,43:rem poke 55296+a0,10
-
 7700 if ax=bx then 7900
-7710 dx=sgn(bx-ax)
-7720 dy=sgn(by-ay)
+
+7705 rem vertical z-shaped corridor
+7710 dx=sgn(bx-ax):dy=sgn(by-ay)
 7730 my=(ay+dy+int(rnd(1)*abs(by-ay-2*dy))*dy) or 1
 7740 for j=ay+dy to my-dy step dy
 7750 a0=ax+j*40:gosub 9000
@@ -260,6 +256,7 @@
 7810 a0=bx+j*40:gosub 9000
 7820 next j
 7830 return
+
 7900 rem vertical straight corridor
 7910 dy=sgn(by-ay)
 7920 for j=ay+dy to by-dy step dy

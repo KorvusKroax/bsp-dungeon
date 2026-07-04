@@ -14,7 +14,7 @@
 
 100 rem *** main loop ***
 101 seed=-int(rnd(1)*32768)-1:rem random seed
-102 rem seed=-15080:rem -24002:rem -19323:rem -17746 -2169
+102 rem seed=-24002:rem -19323:rem -17746 -2169
 103 r=rnd(seed):rem initialize random number generator
 
 105 gosub 500: rem create partitions
@@ -96,10 +96,10 @@
 1520 for i=0 to rc
 1530 if cl(i,0)>-1 then 1800:rem skip non-leaf partitions
 
-1600 xs=rm(i,tl,x)+1
-1610 ys=rm(i,tl,y)+1
-1620 xe=rm(i,br,x)-1
-1630 ye=rm(i,br,y)-1
+1600 xs=rm(i,tl,x):rem +1
+1610 ys=rm(i,tl,y):rem +1
+1620 xe=rm(i,br,x):rem -1
+1630 ye=rm(i,br,y):rem -1
 1640 dx=xe-xs-gp
 1650 dy=ye-ys-gp
 1660 if dx>0 then xs=xs+int(rnd(1)*dx)
@@ -148,7 +148,14 @@
 3120 poke 1024+j+a0,67:rem poke 55296+j+a0,1
 3130 poke 1024+j+a1,67:rem poke 55296+j+a1,1
 3140 next j
+
+3142 rem p=peek(1024+rm(i,tl,x)+a0)
+3143 rem if p=66 or p=109 then poke 1024+rm(i,tl,x)+a0,107:goto 3146
+3144 rem if p=67 or p=110 then poke 1024+rm(i,tl,x)+a0,114:goto 3146
 3145 poke 1024+rm(i,tl,x)+a0,112
+3146 rem p=peek(1024+rm(i,br,x)+a0)
+3147 rem if p=66 or p=125 then poke 1024+rm(i,br,x)+a0,115:goto 3150
+3148 rem if p=67 or p=112 then poke 1024+rm(i,br,x)+a0,114:goto 3150
 3149 poke 1024+rm(i,br,x)+a0,110
 
 3150 for j=rm(i,tl,y)+1 to rm(i,br,y)-1
@@ -160,14 +167,31 @@
 3210 poke 1024+k,46
 3220 next k
 3230 next j
-3160 a0=rm(i,br,y)*40
-3165 poke 1024+rm(i,tl,x)+a0,109
-3169 poke 1024+rm(i,br,x)+a0,125
+3160 a0=rm(i,tl,x)+rm(i,br,y)*40:a1=rm(i,br,x)+rm(i,br,y)*40
+
+3162 rem p=peek(1024+a0)
+3163 rem if p=66 or p=112 then poke 1024+a0,107:goto 3166
+3164 rem if p=67 or p=125 then poke 1024+a0,113:goto 3166
+3165 poke 1024+a0,109
+3166 rem p=peek(1024+a1)
+3167 rem if p=66 or p=110 then poke 1024+a1,115:goto 3170
+3168 rem if p=67 or p=109 then poke 1024+a1,113:goto 3170
+3169 poke 1024+a1,125
+
+3170 rem ***
 
 3300 next i
 3310 return
 
 
+
+3400 rem *** get crosswall ***
+3410 rem w=0
+3420 rem if peek(1024+a0-40)<>32 then w=1:rem van felfelé valami
+3430 rem if peek(1024+a0+1)<>32 then w=w or 2:rem van jobbra valami
+3440 rem if peek(1024+a0+40)<>32 then w=w or 4:rem van lefelé valami
+3450 rem if peek(1024+a0-1)<>32 then w=w or 8:rem van balra valami
+3460 rem return
 
 
 
@@ -181,17 +205,56 @@
 
 6000 rem draw corridor between two rooms (a-b) better!
 
+6010 rem xo=min(rm(a,br,x),rm(b,br,x))-max(rm(a,tl,x),rm(b,tl,x))
+6020 dx=rm(b,br,x)-rm(a,br,x):x1=rm(a,br,x)-dx*(dx<0):rem get smaller x
+6030 dx=rm(b,tl,x)-rm(a,tl,x):x2=rm(a,tl,x)-dx*(dx>0):rem get bigger x
+6040 xo=x1-x2
+
+6100 rem yo=min(rm(a,br,y),rm(b,br,y))-max(rm(a,tl,y),rm(b,tl,y))
+6110 dy=rm(b,br,y)-rm(a,br,y):y1=rm(a,br,y)-dy*(dy<0):rem get smaller y
+6120 dy=rm(b,tl,y)-rm(a,tl,y):y2=rm(a,tl,y)-dy*(dy>0):rem get bigger y
+6130 yo=y1-y2
+
 6200 rem xg=max(rm(b,tl,x)-rm(a,br,x),rm(a,tl,x)-rm(b,br,x))
-6210 x1=rm(b,tl,x)-rm(a,br,x):x2=rm(a,tl,x)-rm(b,br,x)
+6210 x1=rm(b,tl,x)-rm(a,br,x)
+6220 x2=rm(a,tl,x)-rm(b,br,x)
 6230 dx=x2-x1:xg=x1-dx*(dx>0):rem get bigger x
 
 6300 rem yg=max(rm(b,tl,y)-rm(a,br,y),rm(a,tl,y)-rm(b,br,y))
-6310 y1=rm(b,tl,y)-rm(a,br,y):y2=rm(a,tl,y)-rm(b,br,y)
+6310 y1=rm(b,tl,y)-rm(a,br,y)
+6320 y2=rm(a,tl,y)-rm(b,br,y)
 6330 dy=y2-y1:yg=y1-dy*(dy>0):rem get bigger y
 
+6400 if xg=0 and yg=0 then 8000:rem l-shaped for corner touch
+
+6405 rem possible horizontal connection types
+6410 if xg<0 or (xg=0 and yo<0) then hc=0:goto 6500
+6420 if xg=0 and yo>=0 and cl(a,0)>-2 and cl(b,0)>-2 then hc=1:goto 6500:rem door-only corridor
+6430 if xg>0 and rnd(1)<0.5 then hc=3:goto 6500:rem l-shaped corridor
+6440 hc=2:rem z-shaped corridor
+
+6500 rem possible vertical connection types
+6510 if yg<0 or (yg=0 and xo<0) then vc=0:goto 6600
+6520 if yg=0 and xo>=0 and cl(a,0)>-2 and cl(b,0)>-2 then vc=1:goto 6600:rem door-only corridor
+6530 if yg>0 and rnd(1)<0.5 then vc=3:goto 6600:rem l-shaped corridor
+6540 vc=2:rem z-shaped corridor
+
 6600 rem decide horizontal or vertical corridor
-6610 if xg>0 and yg>0 then on rnd(1)*2+1 goto 7100,7600
-6630 if yg>0 then 7600
+6620 if hc>0 and vc>0 then on rnd(1)*2+1 goto 6700,6800
+6630 if vc>0 then 6800
+6700 on hc goto 7000,7100,8000:rem horizontal door-only, z-shaped, l-shaped
+6800 on vc goto 7500,7600,8000:rem vertical door-only, z-shaped, l-shaped
+
+
+
+7000 rem horizontal door only
+7010 dx=rm(b,br,x)-rm(a,br,x):ax=rm(a,br,x)-dx*(dx<0):rem get smaller x
+7020 dy=rm(b,tl,y)-rm(a,tl,y):ys=rm(a,tl,y)-dy*(dy>0):rem get bigger y
+7030 dy=rm(b,br,y)-rm(a,br,y):ye=rm(a,br,y)-dy*(dy<0):rem get smaller y
+7050 dy=ye-ys-2
+7060 ay=ys+1+int(rnd(1)*dy) or 1
+7070 a0=ax+ay*40:poke 1024+a0,43:rem poke 55296+a0,13
+7080 return
 
 
 
@@ -199,12 +262,22 @@
 7110 if rm(a,br,x)<=rm(b,tl,x) then ax=rm(a,br,x):bx=rm(b,tl,x):goto 7120
 7115 ax=rm(a,tl,x):bx=rm(b,br,x)
 
-7120 if cl(a,0)=-2 then gosub 8000:goto 7160
+7120 if cl(a,0)>-2 then 7140
+7125 ax=int((rm(a,tl,x)+rm(a,br,x))/2) or 1
+7130 ay=int((rm(a,tl,y)+rm(a,br,y))/2) or 1
+7133 a0=ax+ay*40:poke 1024+a0,127:rem door-only room
+7135 goto 7160
+
 7140 dy=rm(a,br,y)-rm(a,tl,y)-2
 7145 ay=rm(a,tl,y)+1+int(rnd(1)*dy) or 1
 7150 a0=ax+ay*40:poke 1024+a0,43:rem poke 55296+a0,10
 
-7160 if cl(b,0)=-2 then gosub 8100:goto 7200
+7160 if cl(b,0)>-2 then 7180
+7165 bx=int((rm(b,tl,x)+rm(b,br,x))/2) or 1
+7170 by=int((rm(b,tl,y)+rm(b,br,y))/2) or 1
+7173 a0=bx+by*40:poke 1024+a0,127:rem door-only room
+7175 goto 7200
+
 7180 dy=rm(b,br,y)-rm(b,tl,y)-2
 7185 by=rm(b,tl,y)+1+int(rnd(1)*dy) or 1
 7190 a0=bx+by*40:poke 1024+a0,43:rem poke 55296+a0,10
@@ -216,9 +289,11 @@
 7240 for j=ax+dx to mx-dx step dx
 7250 a0=j+ay*40:gosub 9000
 7260 next j
-7270 for j=ay to by step dy
+7270 for j=ay+dy to by-dy step dy
 7280 a0=mx+j*40:gosub 9000
 7290 next j
+7292 a0=mx+ay*40:gosub 9100:rem corner
+7294 a0=mx+by*40:gosub 9100:rem corner
 7300 for j=mx+dx to bx-dx step dx
 7310 a0=j+by*40:gosub 9000
 7320 next j
@@ -232,16 +307,37 @@
 
 
 
+7500 rem vertical door only
+7510 dy=rm(b,br,y)-rm(a,br,y):ay=rm(a,br,y)-dy*(dy<0):rem get smaller y
+7520 dx=rm(b,tl,x)-rm(a,tl,x):xs=rm(a,tl,x)-dx*(dx>0):rem get bigger x
+7530 dx=rm(b,br,x)-rm(a,br,x):xe=rm(a,br,x)-dx*(dx<0):rem get smaller x
+7550 dx=xe-xs-2
+7560 ax=xs+1+int(rnd(1)*dx) or 1
+7570 a0=ax+ay*40:poke 1024+a0,43:rem poke 55296+a0,13
+7580 return
+
+
+
 7600 rem vertical z-shaped corridor
 7610 if rm(a,br,y)<=rm(b,tl,y) then ay=rm(a,br,y):by=rm(b,tl,y):goto 7620
 7615 ay=rm(a,tl,y):by=rm(b,br,y)
 
-7620 if cl(a,0)=-2 then gosub 8000:goto 7660
+7620 if cl(a,0)>-2 then 7640
+7625 ax=int((rm(a,tl,x)+rm(a,br,x))/2) or 1
+7630 ay=int((rm(a,tl,y)+rm(a,br,y))/2) or 1
+7633 a0=ax+ay*40:poke 1024+a0,127:rem door-only room
+7635 goto 7660
+
 7640 dx=rm(a,br,x)-rm(a,tl,x)-2
 7645 ax=rm(a,tl,x)+1+int(rnd(1)*dx) or 1
 7650 a0=ax+ay*40:poke 1024+a0,43:rem poke 55296+a0,10
 
-7660 if cl(b,0)=-2 then gosub 8100:goto 7700
+7660 if cl(b,0)>-2 then 7680
+7665 bx=int((rm(b,tl,x)+rm(b,br,x))/2) or 1
+7670 by=int((rm(b,tl,y)+rm(b,br,y))/2) or 1
+7673 a0=bx+by*40:poke 1024+a0,127:rem door-only room
+7675 goto 7700
+
 7680 dx=rm(b,br,x)-rm(b,tl,x)-2
 7685 bx=rm(b,tl,x)+1+int(rnd(1)*dx) or 1
 7690 a0=bx+by*40:poke 1024+a0,43:rem poke 55296+a0,10
@@ -253,9 +349,11 @@
 7740 for j=ay+dy to my-dy step dy
 7750 a0=ax+j*40:gosub 9000
 7760 next j
-7770 for j=ax to bx step dx
+7770 for j=ax+dx to bx-dx step dx
 7780 a0=j+my*40:gosub 9000
 7790 next j
+7792 a0=ax+my*40:gosub 9100:rem corner
+7794 a0=bx+my*40:gosub 9100:rem corner
 7800 for j=my+dy to by-dy step dy
 7810 a0=bx+j*40:gosub 9000
 7820 next j
@@ -269,17 +367,49 @@
 
 
 
-8000 rem ** set door-only room for a ***
-8010 ax=int((rm(a,tl,x)+rm(a,br,x))/2) or 1
-8020 ay=int((rm(a,tl,y)+rm(a,br,y))/2) or 1
-8030 a0=ax+ay*40:poke 1024+a0,127:rem door-only room
-8040 return
+8000 rem l-shaped corridor
 
-8100 rem ** set door-only room for b ***
-8110 bx=int((rm(b,tl,x)+rm(b,br,x))/2) or 1
-8120 by=int((rm(b,tl,y)+rm(b,br,y))/2) or 1
-8130 a0=bx+by*40:poke 1024+a0,127:rem door-only room
-8140 return
+8010 if cl(a,0)>-2 then 8030
+8015 ax=int((rm(a,tl,x)+rm(a,br,x))/2) or 1
+8020 ay=int((rm(a,tl,y)+rm(a,br,y))/2) or 1
+8023 a0=ax+ay*40:poke 1024+a0,127:rem door-only room
+8025 goto 8050
+
+8030 dx=rm(a,br,x)-rm(a,tl,x)-2
+8035 ax=rm(a,tl,x)+1+int(rnd(1)*dx) or 1
+8040 dy=rm(a,br,y)-rm(a,tl,y)-2
+8045 ay=rm(a,tl,y)+1+int(rnd(1)*dy) or 1
+
+8050 if cl(b,0)>-2 then 8070
+8055 bx=int((rm(b,tl,x)+rm(b,br,x))/2) or 1
+8060 by=int((rm(b,tl,y)+rm(b,br,y))/2) or 1
+8063 a0=bx+by*40:poke 1024+a0,127:rem door-only room
+8065 goto 8100
+
+8070 dx=rm(b,br,x)-rm(b,tl,x)-2
+8075 bx=rm(b,tl,x)+1+int(rnd(1)*dx) or 1
+8080 dy=rm(b,br,y)-rm(b,tl,y)-2
+8085 by=rm(b,tl,y)+1+int(rnd(1)*dy) or 1
+
+8100 rem decide corridor direction
+8110 if rnd(1)<0.5 then sx=ax:sy=ay:ex=bx:ey=by:goto 8200
+8120 sx=bx:sy=by:ex=ax:ey=ay
+
+8200 rem horizontal part
+8210 dx=sgn(ex-sx):if dx=0 then 8300
+8220 for j=sx+dx to ex-dx step dx
+8230 a0=j+sy*40:gosub 9000
+8240 next j
+
+8300 rem vertical part
+8310 dy=sgn(ey-sy):if dy=0 then return
+8320 for j=sy+dy to ey-dy step dy
+8330 a0=ex+j*40:gosub 9000
+8340 next j
+
+8350 if dx<>0 then a0=ex+sy*40:gosub 9100:rem corner
+
+8400 return
 
 
 
@@ -289,3 +419,8 @@
 9030 if p=66 or p=67 then poke 1024+a0,46:return:rem door
 9040 poke 1024+a0,102:rem corridor
 9050 return
+
+9100 rem *** set corridor corner ***
+9110 p=peek(1024+a0)
+9120 if p=32 then poke 1024+a0,42
+9130 return

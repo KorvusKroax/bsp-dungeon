@@ -2,21 +2,23 @@
 1 tl=0:br=1:x=0:y=1:rem for readability
 
 2 dim rm(8,1,1):rem rooms in the nine (3x3) sectors
-3 dim cn(11,1):rem connections of rooms
+3 dim pr(8):rem flag for phantom rooms
+4 dim cn(11,1):rem connections of rooms
 
 
 
 10 rem *** main loop ***
 11 seed=-int(rnd(1)*32768)-1:rem random seed
-12 rem seed=-5232:rem -5232:rem -29968
+12 rem seed=-10518:rem -5232:rem -29968
 
 15 r=rnd(seed):rem initialize random number generator
 
 20 print "{clr}"
-30 gosub 100:rem create sectors
-40 gosub 500:rem create rooms in sectors
-50 gosub 800:rem draw rooms
-60 gosub 1000:rem connect rooms
+30 print "{down} set sectors":gosub 100
+40 print "{down} create rooms":gosub 300
+50 print "{down} set connections":gosub 800
+55 print "{clr}"
+60 gosub 1000:rem draw rooms
 70 gosub 1500:rem draw corridors
 
 75 print " seed: "seed
@@ -53,21 +55,38 @@
 
 
 
-500 rem *** create rooms in sectors ***
+300 rem *** create rooms in sectors ***
 
-510 rm(0,tl,x)=x0+1:rm(0,br,x)=x1-1:rm(0,tl,y)=y0+1:rm(0,br,y)=y1-1
-520 rm(1,tl,x)=x1+1:rm(1,br,x)=x2-1:rm(1,tl,y)=y0+1:rm(1,br,y)=y1-1
-530 rm(2,tl,x)=x2+1:rm(2,br,x)=x3-1:rm(2,tl,y)=y0+1:rm(2,br,y)=y1-1
-540 rm(3,tl,x)=x0+1:rm(3,br,x)=x1-1:rm(3,tl,y)=y1+1:rm(3,br,y)=y2-1
-550 rm(4,tl,x)=x1+1:rm(4,br,x)=x2-1:rm(4,tl,y)=y1+1:rm(4,br,y)=y2-1
-560 rm(5,tl,x)=x2+1:rm(5,br,x)=x3-1:rm(5,tl,y)=y1+1:rm(5,br,y)=y2-1
-570 rm(6,tl,x)=x0+1:rm(6,br,x)=x1-1:rm(6,tl,y)=y2+1:rm(6,br,y)=y3-1
-580 rm(7,tl,x)=x1+1:rm(7,br,x)=x2-1:rm(7,tl,y)=y2+1:rm(7,br,y)=y3-1
-590 rm(8,tl,x)=x2+1:rm(8,br,x)=x3-1:rm(8,tl,y)=y2+1:rm(8,br,y)=y3-1
+310 rm(0,tl,x)=x0+1:rm(0,br,x)=x1-1:rm(0,tl,y)=y0+1:rm(0,br,y)=y1-1
+320 rm(1,tl,x)=x1+1:rm(1,br,x)=x2-1:rm(1,tl,y)=y0+1:rm(1,br,y)=y1-1
+330 rm(2,tl,x)=x2+1:rm(2,br,x)=x3-1:rm(2,tl,y)=y0+1:rm(2,br,y)=y1-1
+340 rm(3,tl,x)=x0+1:rm(3,br,x)=x1-1:rm(3,tl,y)=y1+1:rm(3,br,y)=y2-1
+350 rm(4,tl,x)=x1+1:rm(4,br,x)=x2-1:rm(4,tl,y)=y1+1:rm(4,br,y)=y2-1
+360 rm(5,tl,x)=x2+1:rm(5,br,x)=x3-1:rm(5,tl,y)=y1+1:rm(5,br,y)=y2-1
+370 rm(6,tl,x)=x0+1:rm(6,br,x)=x1-1:rm(6,tl,y)=y2+1:rm(6,br,y)=y3-1
+380 rm(7,tl,x)=x1+1:rm(7,br,x)=x2-1:rm(7,tl,y)=y2+1:rm(7,br,y)=y3-1
+390 rm(8,tl,x)=x2+1:rm(8,br,x)=x3-1:rm(8,tl,y)=y2+1:rm(8,br,y)=y3-1
 
-595 gr=2:rem minimum inner gap between room walls
 
-600 for i=0 to 8
+395 print " set phantom rooms"
+
+400 for i=0 to 8:pr(i)=0:next i:rem reset removed room flags
+410 nr=int(rnd(1)*4):rem number of rooms to remove (0-3)
+420 if nr=0 then 600
+430 for i=1 to nr
+440 r=int(rnd(1)*9):rem random room index
+450 if pr(r)=1 then 440
+460 pr(r)=1
+470 next i
+
+
+500 print " shrink rooms"
+
+600 gr=2:rem minimum inner gap between room walls
+
+601 for i=0 to 8
+602 if pr(i)=1 then 770
+
 610 xs=rm(i,tl,x)
 620 ys=rm(i,tl,y)
 630 xe=rm(i,br,x)
@@ -84,6 +103,7 @@
 740 rm(i,tl,y)=ys
 750 rm(i,br,x)=xe
 760 rm(i,br,y)=ye
+
 770 next i
 780 return
 
@@ -91,43 +111,45 @@
 
 
 
-800 rem *** draw rooms ***
-810 for i=0 to 8
-
-820 a0=rm(i,tl,y)*40:a1=rm(i,br,y)*40
-830 for j=rm(i,tl,x)+1 to rm(i,br,x)-1
-840 poke 1024+j+a0,67
-850 poke 1024+j+a1,67
-860 next j
-870 poke 1024+rm(i,tl,x)+a0,112
-880 poke 1024+rm(i,br,x)+a0,110
-
-890 for j=rm(i,tl,y)+1 to rm(i,br,y)-1
-900 a0=rm(i,tl,x)+j*40:a1=rm(i,br,x)+j*40
-910 poke 1024+a0,66
-920 poke 1024+a1,66
-930 rem for k=a0+1 to a1-1:poke 1024+k,46:next k:rem fill room with dots
-940 next j
-950 poke 1024+rm(i,tl,x)+rm(i,br,y)*40,109
-960 poke 1024+rm(i,br,x)+rm(i,br,y)*40,125
-
-970 next i
-980 return
+800 rem *** connect rooms *** (temporarily all rooms connected)
+810 cc=0:rem connection counter
+820 for iy=0 to 2
+830 for ix=0 to 2
+840 cr=ix+iy*3:rem current room
+850 if ix<2 then cn(cc,0)=cr:cn(cc,1)=cr+1:cc=cc+1
+860 if iy<2 then cn(cc,0)=cr:cn(cc,1)=cr+3:cc=cc+1
+870 next ix
+880 next iy
+890 return
 
 
 
 
 
-1000 rem *** connect rooms ***
-1010 cc=0:rem connection counter
-1100 for iy=0 to 2
-1110 for ix=0 to 2
-1120 cr=ix+iy*3:rem current room
-1130 if ix<2 then cn(cc,0)=cr:cn(cc,1)=cr+1:cc=cc+1
-1140 if iy<2 then cn(cc,0)=cr:cn(cc,1)=cr+3:cc=cc+1
-1150 next ix
-1160 next iy
-1170 return: rem connect all rooms (temporary)
+1000 rem *** draw rooms ***
+1010 for i=0 to 8
+
+1015 if pr(i)=1 then poke 1024+rm(i,tl,x)+rm(i,tl,y)*40,127:goto 1170
+
+1020 a0=rm(i,tl,y)*40:a1=rm(i,br,y)*40
+1030 for j=rm(i,tl,x)+1 to rm(i,br,x)-1
+1040 poke 1024+j+a0,67
+1050 poke 1024+j+a1,67
+1060 next j
+1070 poke 1024+rm(i,tl,x)+a0,112
+1080 poke 1024+rm(i,br,x)+a0,110
+
+1090 for j=rm(i,tl,y)+1 to rm(i,br,y)-1
+1100 a0=rm(i,tl,x)+j*40:a1=rm(i,br,x)+j*40
+1110 poke 1024+a0,66
+1120 poke 1024+a1,66
+1130 rem for k=a0+1 to a1-1:poke 1024+k,46:next k:rem fill room with dots
+1140 next j
+1150 poke 1024+rm(i,tl,x)+rm(i,br,y)*40,109
+1160 poke 1024+rm(i,br,x)+rm(i,br,y)*40,125
+
+1170 next i
+1180 return
 
 
 
@@ -144,17 +166,19 @@
 
 
 7100 rem horizontal corridor
-7110 ax=rm(a,br,x):bx=rm(b,tl,x)
 
-7120 rem if cl(a,0)=-2 then gosub 8000:goto 7160
+7110 if pr(a)=1 then ax=rm(a,tl,x):ay=rm(a,tl,y):goto 7160
+7120 ax=rm(a,br,x)
 7140 dy=rm(a,br,y)-rm(a,tl,y)-2
 7145 ay=rm(a,tl,y)+1+int(rnd(1)*dy)
 7150 a0=ax+ay*40:poke 1024+a0,43:rem poke 55296+a0,10:rem door
 
-7160 rem if cl(b,0)=-2 then gosub 8100:goto 7200
+7160 if pr(b)=1 then bx=rm(b,tl,x):by=rm(b,tl,y):goto 7200
+7170 bx=rm(b,tl,x)
 7180 dy=rm(b,br,y)-rm(b,tl,y)-2
 7185 by=rm(b,tl,y)+1+int(rnd(1)*dy)
 7190 a0=bx+by*40:poke 1024+a0,43:rem poke 55296+a0,10:rem door
+
 7200 if ay=by then 7400
 
 7210 rem horizontal z-shaped corridor
@@ -182,14 +206,15 @@
 
 
 7600 rem vertical corridor
-7610 ay=rm(a,br,y):by=rm(b,tl,y)
 
-7620 rem if cl(a,0)=-2 then gosub 8000:goto 7660
+7610 if pr(a)=1 then ax=rm(a,tl,x):ay=rm(a,tl,y):goto 7660
+7620 ay=rm(a,br,y)
 7640 dx=rm(a,br,x)-rm(a,tl,x)-2
 7645 ax=rm(a,tl,x)+1+int(rnd(1)*dx)
 7650 a0=ax+ay*40:poke 1024+a0,43:rem poke 55296+a0,10:rem door
 
-7660 rem if cl(b,0)=-2 then gosub 8100:goto 7700
+7660 if pr(b)=1 then bx=rm(b,tl,x):by=rm(b,tl,y):goto 7700
+7670 by=rm(b,tl,y)
 7680 dx=rm(b,br,x)-rm(b,tl,x)-2
 7685 bx=rm(b,tl,x)+1+int(rnd(1)*dx)
 7690 a0=bx+by*40:poke 1024+a0,43:rem poke 55296+a0,10:rem door
@@ -217,17 +242,3 @@
 7930 a0=ax+j*40:poke 1024+a0,102:rem corridor
 7940 next j
 7950 return
-
-
-
-8000 rem ** set no-room for a *** (unused subroutine)
-8010 ax=int((rm(a,tl,x)+rm(a,br,x))/2)
-8020 ay=int((rm(a,tl,y)+rm(a,br,y))/2)
-8030 a0=ax+ay*40:poke 1024+a0,127:rem no-room
-8040 return
-
-8100 rem ** set no-room for b *** (unused subroutine)
-8110 bx=int((rm(b,tl,x)+rm(b,br,x))/2)
-8120 by=int((rm(b,tl,y)+rm(b,br,y))/2)
-8130 a0=bx+by*40:poke 1024+a0,127:rem no-room
-8140 return

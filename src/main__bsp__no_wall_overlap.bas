@@ -283,6 +283,6 @@
 9000 rem *** set corridor ***
 9010 p=peek(1024+a0)
 9020 if p=43 or p=46 then return:rem door or inner room
-9030 if p=66 or p=67 then poke 1024+a0,46:return:rem door
+9030 if p=66 or p=67 then poke 1024+a0,46:return:rem passage (.)
 9040 poke 1024+a0,102:rem corridor
 9050 return

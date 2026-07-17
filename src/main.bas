@@ -3,8 +3,8 @@
 
 2 dim rm(8,1,1):rem rooms in the nine (3x3) sectors
 3 dim pr(8):rem flag for phantom rooms
-4 dim cn(11,1):rem connections of rooms
 
+4 dim cn(8),cv(8),cl(8),ct(3):rem for random connection generation
 
 
 10 rem *** main loop ***
@@ -19,7 +19,7 @@
 50 print "{down} set connections":gosub 800
 55 print "{clr}"
 60 gosub 1000:rem draw rooms
-70 gosub 1500:rem draw corridors
+70 gosub 1300:rem draw corridors
 
 75 print " seed: "seed
 80 get a$
@@ -111,18 +111,27 @@
 
 
 
-800 rem *** connect rooms *** (temporarily all rooms connected)
-810 cc=0:rem connection counter
-820 for iy=0 to 2
-830 for ix=0 to 2
-840 cr=ix+iy*3:rem current room
-850 if ix<2 then cn(cc,0)=cr:cn(cc,1)=cr+1:cc=cc+1
-860 if iy<2 then cn(cc,0)=cr:cn(cc,1)=cr+3:cc=cc+1
-870 next ix
-880 next iy
-890 return
+800 rem *** connect rooms ***
+810 for i=0 to 8:cn(i)=0:cv(i)=0:next i:rem reset connection flags
 
-
+820 r=int(rnd(1)*9)
+830 cv(r)=1:cl(0)=r:n=1
+840 if n=9 then return
+850 a=cl(int(rnd(1)*n)):s=0
+860 v=a-int(a/3)*3
+870 if v>0 then if cv(a-1)=0 then ct(s)=a-1:s=s+1
+880 if v<2 then if cv(a+1)=0 then ct(s)=a+1:s=s+1
+890 if a>2 then if cv(a-3)=0 then ct(s)=a-3:s=s+1
+900 if a<6 then if cv(a+3)=0 then ct(s)=a+3:s=s+1
+910 if s=0 then 850
+920 b=ct(int(rnd(1)*s))
+930 if b=a-1 then cn(a)=cn(a)+1:cn(b)=cn(b)+2
+940 if b=a+1 then cn(a)=cn(a)+2:cn(b)=cn(b)+1
+950 if b=a-3 then cn(a)=cn(a)+4:cn(b)=cn(b)+8
+960 if b=a+3 then cn(a)=cn(a)+8:cn(b)=cn(b)+4
+970 cv(b)=1:cl(n)=b
+980 n=n+1
+990 goto 840
 
 
 
@@ -155,13 +164,14 @@
 
 
 
-1500 rem *** draw corridors ***
-1510 for i=0 to 11
-1520 a=cn(i,0):b=cn(i,1)
-1530 if b-a=1 then gosub 7100:rem horizontal corridor
-1540 if b-a=3 then gosub 7600:rem vertical corridor
-1550 next i
-1560 return
+1300 rem *** draw corridors ***
+1310 for a=0 to 8
+1315 rem if (cn(a) and 1)<>0 then b=a-1:gosub ...:rem open left
+1320 if (cn(a) and 2)<>0 then b=a+1:gosub 7100:rem horizontal corridor
+1325 rem if (cn(a) and 4)<>0 then b=a-3:gosub ...:rem open up
+1330 if (cn(a) and 8)<>0 then b=a+3:gosub 7600:rem vertical corridor
+1340 next a
+1350 return
 
 
 

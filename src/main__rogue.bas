@@ -4,33 +4,37 @@
 2 dim rm(8,1,1):rem rooms in the nine (3x3) sectors
 3 dim pr(8):rem flag for phantom rooms
 
-4 dim cn(8):rem exit flags - 1=up, 2=right, 4=down, 8=left (bitwise)
-5 dim vs(8):rem visited - 1=connected, 0=not connected
-6 dim al(8):rem list of active (connected) rooms
-7 dim ct(3):rem temporary list for current room's possible connections
+4 dim cn(8),vs(8),al(8),ct(3):rem temporary arrays for room connections
 
+5 dim ds(100):rem dungeons seeds
+7 cd=0:ld=-1:rem current and last dungeon
 
+10 if ds(cd)<>0 then 30
+15 seed=-int(rnd(0)*32768)-1:rem random seed
+20 rem seed=-17:rem -5232:rem -29968
+25 ds(cd)=seed
 
-10 rem *** start ***
-20 seed=-int(rnd(0)*32768)-1:rem random seed
-30 rem seed=-17:rem -5232:rem -29968
-40 r=rnd(seed):rem initialize random number generator
+30 r=rnd(ds(cd)):rem initialize random number generator
+40 print "{clr}{down} create map...":gosub 1000: rem create map
+50 print "{clr}":gosub 2000:rem draw map
 
-50 print "{clr}{down} create map..."
-60 gosub 1000: rem create map
-70 print "{clr}"
-80 gosub 2000:rem draw map
+60 pr=int(rnd(1)*9):rem room of passage to prev level
+65 px=rm(pr,tl,x)+1+int(rnd(1)*(rm(pr,br,x)-rm(pr,tl,x)-2))
+70 py=rm(pr,tl,y)+1+int(rnd(1)*(rm(pr,br,y)-rm(pr,tl,y)-2))
+75 poke 1024+px+py*40,60
+80 nr=int(rnd(1)*9):rem room of passage to next level
+85 nx=rm(nr,tl,x)+1+int(rnd(1)*(rm(nr,br,x)-rm(nr,tl,x)-2))
+90 ny=rm(nr,tl,y)+1+int(rnd(1)*(rm(nr,br,y)-rm(nr,tl,y)-2))
+95 poke 1024+nx+ny*40,62
 
 
 
 100 rem *** player ***
-110 r=int(rnd(1)*9):rem start room
+110 if cd>ld then xx=px:yy=py:goto 130
+120 xx=nx:yy=ny
+130 ld=cd
 
-115 rem player start position
-120 px=rm(r,tl,x)+1+int(rnd(1)*(rm(r,br,x)-rm(r,tl,x)-2))
-130 py=rm(r,tl,y)+1+int(rnd(1)*(rm(r,br,y)-rm(r,tl,y)-2))
-
-200 p=px+py*40
+200 p=xx+yy*40
 210 bg=peek(1024+p):rem store char under the player
 220 poke 1024+p,0:rem draw player
 
@@ -39,19 +43,32 @@
 250 if a$="d" then dx=+1:dy=0:goto 300:rem right
 260 if a$="s" then dx=0:dy=+1:goto 300:rem down
 270 if a$="a" then dx=-1:dy=0:goto 300:rem left
-280 goto 230
+280 if a$=chr$(13) then 500:rem action
+290 goto 230
 
 300 rem check collision
-310 np=(px+dx)+(py+dy)*40:rem new position
+310 np=(xx+dx)+(yy+dy)*40:rem new position
 320 c=peek(1024+np)
 330 if c=46 then 400:rem floor
 340 if c=102 then 400:rem corridor
 350 if c=43 then 400:rem door
+350 if c=60 or c=62 then 400:rem stairs to prev or next level
 360 goto 230:rem colliding, no move
 
 400 poke 1024+p,bg
-410 px=px+dx:py=py+dy
+410 xx=xx+dx:yy=yy+dy
 420 goto 200
+
+500 rem leave current level
+510 if bg=60 then 550
+520 if bg=62 then 570
+530 goto 230
+
+550 if cd=0 then end
+560 cd=cd-1:goto 10
+
+570 if cd=100 then end
+580 cd=cd+1:goto 10
 
 
 

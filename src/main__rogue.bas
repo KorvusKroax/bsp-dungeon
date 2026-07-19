@@ -4,7 +4,10 @@
 2 dim rm(8,1,1):rem rooms in the nine (3x3) sectors
 3 dim pr(8):rem flag for phantom rooms
 
-4 dim cn(8),cv(8),cl(8),ct(3):rem for random connection generation
+4 dim cn(8):rem exit flags - 1=left, 2=right, 4=up, 8=down (bitwise)
+5 dim vs(8):rem visited - 1=connected, 0=not connected
+6 dim al(8):rem list of active (connected) rooms
+7 dim ct(3):rem temporary list for current room's possible connections
 
 
 
@@ -112,24 +115,30 @@
 
 
 800 rem *** connect rooms ***
-810 for i=0 to 8:cn(i)=0:cv(i)=0:next i:rem reset connection flags
-820 r=int(rnd(1)*9)
-830 cv(r)=1:cl(0)=r
+810 for i=0 to 8:cn(i)=0:vs(i)=0:next i:rem reset connection flags
+
+820 r=int(rnd(1)*9):rem select random starting room
+830 vs(r)=1:al(0)=r:rem mark starting room as connected and add to list
 
 840 for n=1 to 8
-850 a=cl(int(rnd(1)*n)):s=0
-860 m=a-int(a/3)*3
-870 if m>0 then if cv(a-1)=0 then ct(s)=a-1:s=s+1
-880 if m<2 then if cv(a+1)=0 then ct(s)=a+1:s=s+1
-890 if a>2 then if cv(a-3)=0 then ct(s)=a-3:s=s+1
-900 if a<6 then if cv(a+3)=0 then ct(s)=a+3:s=s+1
-910 if s=0 then 850
-920 b=ct(int(rnd(1)*s))
+
+850 a=al(int(rnd(1)*n)):rem select random connected room
+860 m=a-int(a/3)*3:rem determine column of room (0,1,2)
+
+865 s=0:rem avialable connections counter
+870 if m>0 then if vs(a-1)=0 then ct(s)=a-1:s=s+1:rem not the left column
+880 if m<2 then if vs(a+1)=0 then ct(s)=a+1:s=s+1:rem not the right column
+890 if a>2 then if vs(a-3)=0 then ct(s)=a-3:s=s+1:rem not the top row
+900 if a<6 then if vs(a+3)=0 then ct(s)=a+3:s=s+1:rem not the bottom row
+910 if s=0 then 850:rem no available connections, select another room
+
+920 b=ct(int(rnd(1)*s)):rem select random available connection
 930 if b=a-1 then cn(a)=cn(a)+1:cn(b)=cn(b)+2:rem left-right connection
 940 if b=a+1 then cn(a)=cn(a)+2:cn(b)=cn(b)+1:rem right-left connection
 950 if b=a-3 then cn(a)=cn(a)+4:cn(b)=cn(b)+8:rem up-down connection
 960 if b=a+3 then cn(a)=cn(a)+8:cn(b)=cn(b)+4:rem down-up connection
-970 cv(b)=1:cl(n)=b
+
+970 vs(b)=1:al(n)=b:rem mark new room as connected and add to list
 980 next n
 
 990 return
